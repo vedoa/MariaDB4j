@@ -19,6 +19,7 @@
  */
 package ch.vorburger.mariadb4j;
 
+import static ch.vorburger.mariadb4j.DBConfiguration.Executable.Admin;
 import static ch.vorburger.mariadb4j.DBConfiguration.Executable.Client;
 import static ch.vorburger.mariadb4j.DBConfiguration.Executable.Dump;
 import static ch.vorburger.mariadb4j.DBConfiguration.Executable.InstallDB;
@@ -365,7 +366,9 @@ public class DBConfigurationBuilder {
                                 + "of the package that the binaries are in, for: "
                                 + SystemUtils.OS_VERSION);
             }
-            return "mariadb-11.4.5";
+            // Windows now ships with mysqladmin for graceful shutdown (see DB.java
+            // shutdownGracefullyOnWindows)
+            return WINX64.equals(getOS()) ? "mariadb-11.8.6" : "mariadb-11.4.5";
         }
         return databaseVersion;
     }
@@ -461,6 +464,13 @@ public class DBConfigurationBuilder {
                         isWindows()
                                 ? new File(baseDir, "bin/mysqldump.exe")
                                 : new File(baseDir, "bin/mariadb-dump"));
+
+        executables.putIfAbsent(
+                Admin,
+                () ->
+                        isWindows()
+                                ? new File(baseDir, "bin/mysqladmin.exe")
+                                : new File(baseDir, "bin/mariadb-admin"));
 
         String name = isWindows() ? "mysql" : "mariadb";
         executables.putIfAbsent(
